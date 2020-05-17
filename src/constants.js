@@ -37,6 +37,6 @@ export const ROOT_WILDCARD = `/*`;
 
 export const COMMON_BUNDLES = [`commons`, `app`];
 
-export const HEADER_COMMENT = `## Created with gatsby-plugin-fastly`;
+export const HEADER_COMMENT = `## Created with abhi-plugin-fastly`;
 
 export const PAGE_DATA_DIR = `page-data/`;
