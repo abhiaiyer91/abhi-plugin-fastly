@@ -10,46 +10,74 @@ export default async function writeRedirectsFile(
 
   if (!redirects.length && !rewrites.length) return null;
 
+  // TODO Need to figure out how to set this for fastly, assume this isn't the _redirects file
   const FILE_PATH = publicFolder(`_redirects`);
 
-  const redirectStrings = redirects.map((redirect) => {
+  let vclRedirects = [];
+
+  redirects.forEach((redirect) => {
     const { fromPath, isPermanent, force, toPath, statusCode } = redirect;
 
     let status = isPermanent ? `301` : `302`;
     if (statusCode) status = String(statusCode);
 
-    if (force) status = `${status}!`;
+    // TODO - What does a force look like in fastly vcl?
+    //   if (force) status = `${status}!`;
 
-    return `"${fromPath}": "${toPath}"`;
+    vclRedirects.push({
+      fromPath,
+      toPath,
+      status,
+    });
   });
 
-  rewrites = rewrites.map(
-    ({ fromPath, toPath }) => `${fromPath}  ${toPath}  200`
+  rewrites.forEach(({ fromPath, toPath }) =>
+    vclRedirects.push({
+      fromPath,
+      toPath,
+      status: `200`,
+    })
   );
 
+  // TODO This is only relevant if we support a separate vcl file
   // Websites may also have statically defined redirects
   // In that case we should append to them (not overwrite)
   // Make sure we aren't just looking at previous build results though
 
-  const redirectsTable = `table redirectsTable {\n${redirectStrings.join(
-    `\n`
-  )}\n}\nif (table.lookup(solution_redirects, req.url.path)) {\nerror 718 "redirect";\n}`;
+  // TODO ?do we want to support both a .vcl and the defined redirects? Doesn't seem like a good idea
+  // unless fastly supports multiple .vcl files.
 
-  const redirectsRouting = `
-    ${redirects.map(({ fromPath, isPermanent, force, toPath, statusCode }) => {
-      let status = isPermanent ? `301` : `302`;
-      if (statusCode) status = String(statusCode);
-      return `
-        if (obj.status == 718 && obj.response == "redirect" && req.url.path ~ ${fromPath}) {
-          set obj.status = ${status};
-          set obj.http.Location = "https://" + req.http.host + table.lookup(solution_redirects, req.url.path) + if (req.url.qs, "?" req.url.qs, "");
-          return (deliver);
-        }
-      `;
-    })}`;
+  const redirectsTable = `table redirects {
+    ${vclRedirects
+      .map(({ fromPath, toPath }) => `"${fromPath}", "${toPath}",`)
+      .join("\n")};
+  }`;
+
+  const redirectTypesTable = `table redirect_types {
+    ${vclRedirects
+      .map(({ fromPath, status }) => `"${fromPath}", "${status}",`)
+      .join("\n")};
+  }`;
+
+  const vclRecv = `sub vcl_recv {
+    if(table.lookup(redirects, req.url)) {
+      error 777
+    }
+  }`;
+
+  // TODO Can we just use the strings they give us? If there is no http/https will it work?
+  const vclError = `sub vcl_error {
+    if (obj.status === 777) {
+      set obj.http.Location = table.lookup(redirects, req.url);
+      set obj.status = std.atoi(table.lookup(redirect_types, req.url, "302"));
+      return(deliver);
+    }
+  }`;
+
+  // These changes are based on this file https://gist.github.com/mshmsh5000/130300bbe6f574dbf846ac6cd24b7cc5
 
   return writeFile(
     FILE_PATH,
-    [redirectsTable, redirectsRouting, ...rewrites].join(`\n`)
+    [redirectsTable, redirectTypesTable, vclRecv, vclError].join(`\n\n`)
   );
 }

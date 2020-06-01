@@ -179,10 +179,15 @@ describe(`create-redirects`, () => {
         {
           fromPath: "/url_that_is/not_pretty",
           toPath: "/pretty/url",
-          statusCode: 200,
+          statusCode: 201,
         },
       ],
-      []
+      [
+        {
+          fromPath: "/url_that_is/ugly",
+          toPath: "/not_ugly/url",
+        },
+      ]
     );
 
     const output = await fs.readFile(
