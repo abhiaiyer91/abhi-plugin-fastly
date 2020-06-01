@@ -1,25 +1,29 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`create-redirects should assemble a redirects file 1`] = `
-"table redirectsTable {
-\\"/old-url\\": \\"/new-url\\"
-\\"/url_that_is/not_pretty\\": \\"/pretty/url\\"
-}
-if (table.lookup(solution_redirects, req.url.path)) {
-error 718 \\"redirect\\";
-}
+"table redirects {
+    \\"/old-url\\", \\"/new-url\\",
+\\"/url_that_is/not_pretty\\", \\"/pretty/url\\",
+\\"/url_that_is/ugly\\", \\"/not_ugly/url\\",;
+  }
 
-    
-        if (obj.status == 718 && obj.response == \\"redirect\\" && req.url.path ~ /old-url) {
-          set obj.status = 301;
-          set obj.http.Location = \\"https://\\" + req.http.host + table.lookup(solution_redirects, req.url.path) + if (req.url.qs, \\"?\\" req.url.qs, \\"\\");
-          return (deliver);
-        }
-      ,
-        if (obj.status == 718 && obj.response == \\"redirect\\" && req.url.path ~ /url_that_is/not_pretty) {
-          set obj.status = 200;
-          set obj.http.Location = \\"https://\\" + req.http.host + table.lookup(solution_redirects, req.url.path) + if (req.url.qs, \\"?\\" req.url.qs, \\"\\");
-          return (deliver);
-        }
-      "
+table redirect_types {
+    \\"/old-url\\", \\"301\\",
+\\"/url_that_is/not_pretty\\", \\"201\\",
+\\"/url_that_is/ugly\\", \\"200\\",;
+  }
+
+sub vcl_recv {
+    if(table.lookup(redirects, req.url)) {
+      error 777
+    }
+  }
+
+sub vcl_error {
+    if (obj.status === 777) {
+      set obj.http.Location = table.lookup(redirects, req.url);
+      set obj.status = std.atoi(table.lookup(redirect_types, req.url, \\"302\\"));
+      return(deliver);
+    }
+  }"
 `;
