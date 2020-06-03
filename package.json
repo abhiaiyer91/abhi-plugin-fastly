@@ -1,7 +1,7 @@
 {
   "name": "abhi-plugin-fastly",
   "description": "A Gatsby plugin which generates a _headers file for fastly",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "author": "Abhi Aiyer",
   "dependencies": {
     "@babel/runtime": "^7.9.6",
