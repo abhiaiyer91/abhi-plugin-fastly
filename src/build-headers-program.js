@@ -325,39 +325,8 @@ const applyCachingHeaders = (pluginData, { mergeCachingHeaders }) => (
 const applyTransfromHeaders = ({ transformHeaders }) => (headers) =>
   _.mapValues(headers, transformHeaders);
 
-const transformToString = (headers) =>
-  `${HEADER_COMMENT}\n\n${stringifyHeaders(headers)}`;
-
 const writeHeadersFile = ({ publicFolder }) => (contents) =>
-  writeFile(publicFolder(FASTLY_HEADERS_FILENAME), contents);
-
-function toVcl(headers) {
-  const headerPairs = Object.entries(headers);
-
-  return headerPairs.reduce((memo, currentVal) => {
-    if (currentVal[0] === "/*") {
-      currentVal[1].forEach((item) => {
-        const vals = item.split(":");
-        memo += `\nset resp.http.${vals[0]} = "${vals[1].trim()}";\n`;
-      });
-    } else if (/\//.test(currentVal[0])) {
-      memo += `\nif (req.url.path == "${currentVal[0]}") {\n ${currentVal[1]
-        .map((item) => {
-          if (!Array.isArray(item)) {
-            const vals = item.split(":");
-            return `set resp.http.${vals[0]} = "${vals[1].trim()}";`;
-          }
-
-          return ``;
-        })
-        .join(`\n`)}\n}`;
-    } else {
-      memo += `\nset resp.http.${currentVal[0]} = "${currentVal[1]}";`;
-    }
-
-    return memo;
-  }, ``);
-}
+  writeFile(publicFolder(FASTLY_HEADERS_FILENAME), JSON.stringify(contents));
 
 export default function buildHeadersProgram(
   pluginData,
@@ -372,7 +341,6 @@ export default function buildHeadersProgram(
     mapUserLinkAllPageHeaders(pluginData, pluginOptions),
     applyLinkHeaders(pluginData, pluginOptions),
     applyTransfromHeaders(pluginOptions),
-    toVcl,
     writeHeadersFile(pluginData)
   )(pluginOptions.headers);
 }

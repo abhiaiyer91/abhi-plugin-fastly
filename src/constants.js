@@ -5,7 +5,8 @@ export const BUILD_HTML_STAGE = `build-html`;
 export const BUILD_CSS_STAGE = `build-css`;
 
 // Plugin values
-export const FASTLY_HEADERS_FILENAME = `_headers.vcl`;
+export const FASTLY_HEADERS_FILENAME = `_headers.json`;
+export const FASTLY_REDIRECTS_FILENAME = `_redirects.json`;
 
 export const DEFAULT_OPTIONS = {
   headers: {},

@@ -1,4 +1,5 @@
 import { writeFile } from "fs-extra";
+import { FASTLY_REDIRECTS_FILENAME } from "./constants";
 
 export default async function writeRedirectsFile(
   pluginData,
@@ -11,6 +12,6 @@ export default async function writeRedirectsFile(
 
   // Is it ok to pass through the data or should we format it so that we don't have dependencies
   // between the redirects and rewrites formats? What are the chances those will change?
-  const FILE_PATH = publicFolder(`_redirects.json`);
-  return writeFile(FILE_PATH, JSON.stringify({redirects, rewrites}))
+  const FILE_PATH = publicFolder(FASTLY_REDIRECTS_FILENAME);
+  return writeFile(FILE_PATH, JSON.stringify({ redirects, rewrites }));
 }
