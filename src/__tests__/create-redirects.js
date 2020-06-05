@@ -2,7 +2,7 @@ import createRedirects from "../create-redirects";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs-extra";
-import { DEFAULT_OPTIONS, FASTLY_HEADERS_FILENAME } from "../constants";
+import { FASTLY_REDIRECTS_FILENAME } from "../constants";
 
 jest.mock(`fs-extra`, () => {
   return {
@@ -191,11 +191,9 @@ describe(`create-redirects`, () => {
     );
 
     const output = await fs.readFile(
-      pluginData.publicFolder("_redirects"),
+      pluginData.publicFolder(FASTLY_REDIRECTS_FILENAME),
       `utf8`
     );
-
-    console.log(output);
     expect(output).toMatchSnapshot();
   });
 });
