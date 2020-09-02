@@ -24,7 +24,7 @@ describe(`build-headers-program`, () => {
 
   const createPluginData = async () => {
     const tmpDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), `abhi-plugin-fastly-`)
+      path.join(os.tmpdir(), `gatsby-plugin-fastly-`)
     );
 
     return {
